@@ -1,0 +1,42 @@
+[
+  {
+    "alias": [],
+    "command": "gemini:skills:deregister",
+    "flagAliases": [],
+    "flagChars": ["i"],
+    "flags": ["id", "json"],
+    "plugin": "@simplysf/simply-gemini"
+  },
+  {
+    "alias": [],
+    "command": "gemini:skills:install",
+    "flagAliases": [],
+    "flagChars": ["s"],
+    "flags": ["json", "skill"],
+    "plugin": "@simplysf/simply-gemini"
+  },
+  {
+    "alias": [],
+    "command": "gemini:skills:list",
+    "flagAliases": [],
+    "flagChars": [],
+    "flags": ["available", "installed", "json"],
+    "plugin": "@simplysf/simply-gemini"
+  },
+  {
+    "alias": [],
+    "command": "gemini:skills:register",
+    "flagAliases": [],
+    "flagChars": ["d", "i", "p"],
+    "flags": ["description", "id", "json", "path"],
+    "plugin": "@simplysf/simply-gemini"
+  },
+  {
+    "alias": [],
+    "command": "gemini:skills:uninstall",
+    "flagAliases": [],
+    "flagChars": ["s"],
+    "flags": ["json", "skill"],
+    "plugin": "@simplysf/simply-gemini"
+  }
+]
