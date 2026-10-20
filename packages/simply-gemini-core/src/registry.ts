@@ -20,7 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { ConfigError, NotFoundError } from './errors.js';
 
-/** One registered skill source: a directory that holds skills, under an id the caller chose. */
+/** One registered source: a directory that holds skills or subagents, under an id the caller chose. */
 export interface RegistryEntry {
   readonly id: string;
   readonly path: string;
@@ -40,17 +40,29 @@ export interface GeminiHomeOptions {
   readonly home?: string;
 }
 
+/** Skills and subagents are registered separately, each in a file of its own. */
+export type RegistryKind = 'skills' | 'agents';
+
+export interface RegistryOptions extends GeminiHomeOptions {
+  /** Which registry to use. Defaults to `skills`. */
+  readonly kind?: RegistryKind;
+}
+
+const KINDS: Record<RegistryKind, { readonly file: string; readonly noun: string }> = {
+  skills: { file: 'skills-registry.json', noun: 'skill' },
+  agents: { file: 'agents-registry.json', noun: 'subagent' },
+};
+
 export function geminiDir(options: GeminiHomeOptions = {}): string {
   return path.join(options.home ?? os.homedir(), '.gemini');
 }
 
 /**
- * The registry lives beside Gemini's own state, at the same path and in the same shape the
- * Salesforce `sf gemini skills` plugin uses, so a source registered with either tool is visible
- * to both.
+ * The registries live beside Gemini's own state, at the same paths and in the same shape the
+ * Salesforce `sf gemini` plugin uses, so a source registered with either tool is visible to both.
  */
-export function registryFile(options: GeminiHomeOptions = {}): string {
-  return path.join(geminiDir(options), 'skills-registry.json');
+export function registryFile(options: RegistryOptions = {}): string {
+  return path.join(geminiDir(options), KINDS[options.kind ?? 'skills'].file);
 }
 
 function isEntry(value: unknown): value is RegistryEntry {
@@ -65,21 +77,22 @@ function isEntry(value: unknown): value is RegistryEntry {
 }
 
 /**
- * Reads the registry. A missing file is an empty registry; a file that exists but cannot be
+ * Reads a registry. A missing file is an empty registry; a file that exists but cannot be
  * understood is an error.
  *
  * The plugin this was ported from read a malformed file as empty, and the next `register` then
  * wrote an empty-plus-one registry over it — silently discarding every other registration. Refusing
  * is the only answer that leaves the file for a person to repair.
  */
-export async function readRegistry(options: GeminiHomeOptions = {}): Promise<Registry> {
+export async function readRegistry(options: RegistryOptions = {}): Promise<Registry> {
   const file = registryFile(options);
+  const { noun } = KINDS[options.kind ?? 'skills'];
   let content: string;
   try {
     content = await fs.promises.readFile(file, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { registrations: [] };
-    throw new ConfigError(`Could not read the skill registry at ${file}: ${(error as Error).message}`);
+    throw new ConfigError(`Could not read the ${noun} registry at ${file}: ${(error as Error).message}`);
   }
 
   let parsed: unknown;
@@ -87,15 +100,15 @@ export async function readRegistry(options: GeminiHomeOptions = {}): Promise<Reg
     parsed = JSON.parse(content);
   } catch (error) {
     throw new ConfigError(
-      `The skill registry at ${file} is not valid JSON (${(error as Error).message}). ` +
+      `The ${noun} registry at ${file} is not valid JSON (${(error as Error).message}). ` +
         'Fix or delete it; nothing was changed.',
     );
   }
 
-  const registrations = (parsed as { registrations?: unknown }).registrations;
+  const registrations = (parsed as { registrations?: unknown } | null)?.registrations;
   if (!Array.isArray(registrations) || !registrations.every(isEntry)) {
     throw new ConfigError(
-      `The skill registry at ${file} does not have the expected shape ` +
+      `The ${noun} registry at ${file} does not have the expected shape ` +
         '({"registrations": [{"id", "path", "registeredAt"}]}). Fix or delete it; nothing was changed.',
     );
   }
@@ -103,10 +116,10 @@ export async function readRegistry(options: GeminiHomeOptions = {}): Promise<Reg
 }
 
 /**
- * Writes the registry through a temporary file and a rename, so an interrupted write leaves the
+ * Writes a registry through a temporary file and a rename, so an interrupted write leaves the
  * previous registry in place rather than half of a new one.
  */
-export async function writeRegistry(registry: Registry, options: GeminiHomeOptions = {}): Promise<void> {
+export async function writeRegistry(registry: Registry, options: RegistryOptions = {}): Promise<void> {
   const file = registryFile(options);
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
   const temporary = `${file}.${randomUUID()}.tmp`;
@@ -121,22 +134,23 @@ export interface RegisterResult {
 }
 
 /**
- * Registers a directory of skills under `id`. An id or a directory can each be registered once,
- * so registering either again replaces the earlier entry rather than scanning the same skills
- * twice. The directory must exist now; one that disappears later is reported by discovery rather
- * than failing it.
+ * Registers a directory under `id` in one registry. An id or a directory can each be registered
+ * once, so registering either again replaces the earlier entry rather than scanning the same
+ * directory twice. The directory must exist now; one that disappears later is reported by discovery
+ * rather than failing it.
  */
-export async function registerSkillSource(
+async function registerSource(
+  kind: RegistryKind,
   id: string,
   directory: string,
-  description?: string,
-  options: GeminiHomeOptions = {},
+  description: string | undefined,
+  options: GeminiHomeOptions,
 ): Promise<RegisterResult> {
   if (id.trim() === '') throw new ConfigError('A registration id cannot be empty.');
   const absolute = path.resolve(directory);
   const stat = await fs.promises.stat(absolute).catch(() => undefined);
   if (!stat?.isDirectory()) throw new ConfigError(`${absolute} is not a directory.`);
-  const registry = await readRegistry(options);
+  const registry = await readRegistry({ ...options, kind });
 
   const replaced = registry.registrations.filter((entry) => entry.id === id || entry.path === absolute);
   const entry: RegistryEntry = {
@@ -147,27 +161,76 @@ export async function registerSkillSource(
   };
 
   registry.registrations = [...registry.registrations.filter((existing) => !replaced.includes(existing)), entry];
-  await writeRegistry(registry, options);
+  await writeRegistry(registry, { ...options, kind });
   return { entry, replaced };
 }
 
 /**
- * Removes the registration with this id and returns it. Naming an id that is not registered is an
- * error rather than a quiet success, because the likeliest cause is a typo, and a typo that
- * reports success leaves the source being scanned.
+ * Removes the registration with this id from one registry and returns it. Naming an id that is not
+ * registered is an error rather than a quiet success, because the likeliest cause is a typo, and a
+ * typo that reports success leaves the source being scanned.
  */
-export async function deregisterSkillSource(id: string, options: GeminiHomeOptions = {}): Promise<RegistryEntry> {
-  const registry = await readRegistry(options);
+async function deregisterSource(kind: RegistryKind, id: string, options: GeminiHomeOptions): Promise<RegistryEntry> {
+  const registry = await readRegistry({ ...options, kind });
   const removed = registry.registrations.find((entry) => entry.id === id);
   if (removed === undefined) {
     const known = registry.registrations.map((entry) => entry.id);
     throw new NotFoundError(
-      `No skill source is registered as "${id}". ` +
+      `No ${KINDS[kind].noun} source is registered as "${id}". ` +
         (known.length === 0 ? 'Nothing is registered.' : `Registered: ${known.join(', ')}.`),
     );
   }
 
   registry.registrations = registry.registrations.filter((entry) => entry !== removed);
-  await writeRegistry(registry, options);
+  await writeRegistry(registry, { ...options, kind });
   return removed;
+}
+
+/** Registers a directory of skills under `id`, in `~/.gemini/skills-registry.json`. */
+export async function registerSkillSource(
+  id: string,
+  directory: string,
+  description?: string,
+  options: GeminiHomeOptions = {},
+): Promise<RegisterResult> {
+  return registerSource('skills', id, directory, description, options);
+}
+
+/** Removes a skill source by id. */
+export async function deregisterSkillSource(id: string, options: GeminiHomeOptions = {}): Promise<RegistryEntry> {
+  return deregisterSource('skills', id, options);
+}
+
+/** Registers a directory of subagents under `id`, in `~/.gemini/agents-registry.json`. */
+export async function registerAgentSource(
+  id: string,
+  directory: string,
+  description?: string,
+  options: GeminiHomeOptions = {},
+): Promise<RegisterResult> {
+  return registerSource('agents', id, directory, description, options);
+}
+
+/** Removes a subagent source by id. */
+export async function deregisterAgentSource(id: string, options: GeminiHomeOptions = {}): Promise<RegistryEntry> {
+  return deregisterSource('agents', id, options);
+}
+
+/**
+ * Splits sources into those whose directory exists and those that are gone, so a caller can scan
+ * the first and say why the second's contents vanished.
+ */
+export async function partitionSources(
+  registrations: readonly RegistryEntry[],
+): Promise<{ present: RegistryEntry[]; missing: RegistryEntry[] }> {
+  const exists = await Promise.all(
+    registrations.map(async (entry) => {
+      const stat = await fs.promises.stat(entry.path).catch(() => undefined);
+      return stat?.isDirectory() === true;
+    }),
+  );
+  return {
+    present: registrations.filter((_, index) => exists[index]),
+    missing: registrations.filter((_, index) => !exists[index]),
+  };
 }

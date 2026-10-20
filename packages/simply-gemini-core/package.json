@@ -1,6 +1,6 @@
 {
   "name": "@simplysf/simply-gemini-core",
-  "description": "Skill discovery and the skill-source registry behind the simply gemini CLI",
+  "description": "Skill and subagent discovery, and the source registries, behind the simply gemini CLI",
   "version": "0.1.0",
   "author": "@ClayChipps",
   "homepage": "https://github.com/SimplySF/simply-gemini",
@@ -20,6 +20,7 @@
     "gemini",
     "gemini-cli",
     "skills",
+    "subagents",
     "simply"
   ],
   "license": "Apache-2.0",

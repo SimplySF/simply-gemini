@@ -18,10 +18,10 @@ This repository is a Lerna monorepo holding the CLI package and the library pack
 Every package has its own `CONTRIBUTING.md` covering what is specific to it — read this file first,
 then that one.
 
-| Package                                                       | Description                                                     |
-| ------------------------------------------------------------- | --------------------------------------------------------------- |
-| [`@simplysf/simply-gemini`](packages/simply-gemini)           | The `simply gemini` CLI                                         |
-| [`@simplysf/simply-gemini-core`](packages/simply-gemini-core) | Skill discovery, the skill-source registry, and selection rules |
+| Package                                                       | Description                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`@simplysf/simply-gemini`](packages/simply-gemini)           | The `simply gemini` CLI                                                  |
+| [`@simplysf/simply-gemini-core`](packages/simply-gemini-core) | Skill and subagent discovery, the source registries, and selection rules |
 
 Tooling:
 

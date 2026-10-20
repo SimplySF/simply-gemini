@@ -18,7 +18,7 @@ import { Flags, type Command, type Interfaces } from '@oclif/core';
 import { CliError, discoverSkills, selectSkills, type Skill, type SkillAction } from '@simplysf/simply-gemini-core';
 import { GeminiCommand } from './base-command.js';
 import { GeminiNotFoundError } from './gemini-cli.js';
-import { canPrompt, pickSkills } from './prompt.js';
+import { canPrompt, pickNames } from './prompt.js';
 
 /** What `install` and `uninstall` print under `--json`. */
 export interface SkillChangeResult {
@@ -87,7 +87,7 @@ export abstract class SkillChangeCommand<T extends typeof Command> extends Gemin
       );
     }
 
-    const picked = await pickSkills(`Select skills to ${this.action}:`, candidates);
+    const picked = await pickNames(`Select skills to ${this.action}:`, candidates);
     if (picked === undefined) {
       this.log('Cancelled. Nothing changed.');
       return { targets: [], skipped: [] };

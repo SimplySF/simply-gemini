@@ -16,9 +16,9 @@
 
 import process from 'node:process';
 import { groupMultiselect, isCancel } from '@clack/prompts';
-import { groupByCategory, stripControlOneLine, type Skill } from '@simplysf/simply-gemini-core';
+import { groupByCategory, stripControlOneLine } from '@simplysf/simply-gemini-core';
 
-/** How much of a description the picker shows as a hint beside the focused skill. */
+/** How much of a description the picker shows as a hint beside the focused item. */
 const HINT_LIMIT = 80;
 
 /**
@@ -35,16 +35,34 @@ function hint(description: string | undefined): string | undefined {
   return text.length > HINT_LIMIT ? `${text.slice(0, HINT_LIMIT - 1)}…` : text;
 }
 
+/** Anything the picker can list: a skill or a subagent. */
+export interface Pickable {
+  readonly name: string;
+  readonly description?: string;
+  readonly category?: string;
+  readonly installed?: boolean;
+}
+
+export interface PickOptions {
+  /** Label the items that are already installed, for a list that offers both. */
+  readonly markInstalled?: boolean;
+}
+
 /**
- * Asks which of `skills` to act on, grouped by category. Returns the chosen names, or `undefined`
+ * Asks which of `items` to act on, grouped by category. Returns the chosen names, or `undefined`
  * if the person cancelled — which is different from choosing nothing, and reported differently.
  */
-export async function pickSkills(message: string, skills: readonly Skill[]): Promise<string[] | undefined> {
+export async function pickNames(
+  message: string,
+  items: readonly Pickable[],
+  { markInstalled = false }: PickOptions = {},
+): Promise<string[] | undefined> {
   const options: Record<string, Array<{ value: string; label: string; hint?: string }>> = {};
-  for (const [category, members] of groupByCategory(skills)) {
-    options[stripControlOneLine(category)] = members.map((skill) => {
-      const shown = hint(skill.description);
-      return { value: skill.name, label: stripControlOneLine(skill.name), ...(shown ? { hint: shown } : {}) };
+  for (const [category, members] of groupByCategory(items)) {
+    options[stripControlOneLine(category)] = members.map((item) => {
+      const shown = hint(item.description);
+      const label = `${stripControlOneLine(item.name)}${markInstalled && item.installed ? ' (installed)' : ''}`;
+      return { value: item.name, label, ...(shown ? { hint: shown } : {}) };
     });
   }
 

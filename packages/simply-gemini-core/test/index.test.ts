@@ -33,10 +33,12 @@ describe('@simplysf/simply-gemini-core', () => {
         'CliError',
         'ConfigError',
         'NotFoundError',
-        // the registry
+        // the registries
+        'deregisterAgentSource',
         'deregisterSkillSource',
         'geminiDir',
         'readRegistry',
+        'registerAgentSource',
         'registerSkillSource',
         'registryFile',
         'writeRegistry',
@@ -49,7 +51,16 @@ describe('@simplysf/simply-gemini-core', () => {
         'readDescription',
         'selectSkills',
         'skillsDir',
+        // subagents
+        'AGENT_EXTENSION',
+        'agentsDir',
+        'assertAgentName',
+        'discoverAgents',
+        'installAgent',
+        'selectAgents',
+        'uninstallAgent',
         // rendering
+        'agentColumns',
         'formatTable',
         'skillColumns',
         'stripControl',

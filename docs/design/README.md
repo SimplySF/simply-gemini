@@ -31,9 +31,10 @@ refactors that keep the public surface identical (though a short doc is welcome 
 
 ## Index
 
-| #    | Title                                                                          | Status      |
-| ---- | ------------------------------------------------------------------------------ | ----------- |
-| 0001 | [Installing Gemini CLI skills from registered sources](0001-skills-install.md) | Implemented |
+| #    | Title                                                                             | Status      |
+| ---- | --------------------------------------------------------------------------------- | ----------- |
+| 0001 | [Installing Gemini CLI skills from registered sources](0001-skills-install.md)    | Implemented |
+| 0002 | [Installing Gemini CLI subagents from registered sources](0002-agents-install.md) | Implemented |
 
 ## Template
 
