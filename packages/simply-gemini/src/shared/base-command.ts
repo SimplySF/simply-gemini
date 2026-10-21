@@ -16,7 +16,7 @@
 
 import process from 'node:process';
 import { Command, type Interfaces } from '@oclif/core';
-import { CliError, stripControl, type RegistryEntry } from '@simplysf/simply-gemini-core';
+import { CliError, stripControl, type RegistryEntry, type RegistryKind } from '@simplysf/simply-gemini-core';
 
 export type GeminiFlags<T extends typeof Command> = Interfaces.InferredFlags<T['flags']>;
 export type CommandArgs<T extends typeof Command> = Interfaces.InferredArgs<T['args']>;
@@ -90,14 +90,15 @@ export abstract class GeminiCommand<T extends typeof Command> extends Command {
 
   /**
    * Says which registered sources were skipped because their directory is gone. Without this a
-   * moved or deleted checkout makes its skills silently disappear from every listing.
+   * moved or deleted checkout makes its skills or subagents silently disappear from every listing.
    */
-  protected warnMissingSources(missing: readonly RegistryEntry[]): void {
+  protected warnMissingSources(missing: readonly RegistryEntry[], kind: RegistryKind = 'skills'): void {
+    const noun = kind === 'skills' ? 'Skill' : 'Subagent';
     for (const entry of missing) {
       this.warn(
         stripControl(
-          `Skill source "${entry.id}" is registered at ${entry.path}, which no longer exists. ` +
-            `Re-register it, or remove it with: simply gemini skills deregister --id ${entry.id}`,
+          `${noun} source "${entry.id}" is registered at ${entry.path}, which no longer exists. ` +
+            `Re-register it, or remove it with: simply gemini ${kind} deregister --id ${entry.id}`,
         ),
       );
     }

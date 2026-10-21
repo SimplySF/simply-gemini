@@ -18,12 +18,29 @@
 // freely; removing or renaming anything that is exported here is a breaking change, and
 // test/index.test.ts pins the list so that cannot happen by accident.
 
-export { CliError, ConfigError, NotFoundError } from './errors.js';
-export { formatTable, skillColumns, type Column } from './output.js';
 export {
+  AGENT_EXTENSION,
+  agentsDir,
+  assertAgentName,
+  discoverAgents,
+  installAgent,
+  selectAgents,
+  uninstallAgent,
+  type Agent,
+  type AgentDiscovery,
+  type AgentSelection,
+  type RejectedAgent,
+  type SelectAgentOptions,
+} from './agents.js';
+export { CliError, ConfigError, NotFoundError } from './errors.js';
+export { readDescription } from './front-matter.js';
+export { agentColumns, formatTable, skillColumns, type Column } from './output.js';
+export {
+  deregisterAgentSource,
   deregisterSkillSource,
   geminiDir,
   readRegistry,
+  registerAgentSource,
   registerSkillSource,
   registryFile,
   writeRegistry,
@@ -31,6 +48,8 @@ export {
   type RegisterResult,
   type Registry,
   type RegistryEntry,
+  type RegistryKind,
+  type RegistryOptions,
 } from './registry.js';
 export {
   DEFAULT_CATEGORY,
@@ -38,7 +57,6 @@ export {
   assertSkillName,
   discoverSkills,
   groupByCategory,
-  readDescription,
   selectSkills,
   skillsDir,
   type Discovery,

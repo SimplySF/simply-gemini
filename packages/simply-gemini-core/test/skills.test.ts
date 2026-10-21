@@ -19,12 +19,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ConfigError, NotFoundError } from '../src/errors.js';
+import { readDescription } from '../src/front-matter.js';
 import { registerSkillSource } from '../src/registry.js';
 import {
   assertSkillName,
   discoverSkills,
   groupByCategory,
-  readDescription,
   selectSkills,
   skillsDir,
   type Skill,

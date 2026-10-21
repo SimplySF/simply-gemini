@@ -17,7 +17,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GeminiSkillsInstall from '../../../../src/commands/gemini/skills/install.js';
 import { GeminiCommandError, GeminiNotFoundError, linkSkill } from '../../../../src/shared/gemini-cli.js';
-import { canPrompt, pickSkills } from '../../../../src/shared/prompt.js';
+import { canPrompt, pickNames } from '../../../../src/shared/prompt.js';
 import { sandbox, type Sandbox } from '../../../helpers.js';
 
 // Only the two things that reach outside the process are replaced: running `gemini`, and asking a
@@ -27,14 +27,14 @@ vi.mock('../../../../src/shared/gemini-cli.js', async (importOriginal) => ({
   linkSkill: vi.fn(),
   uninstallSkill: vi.fn(),
 }));
-vi.mock('../../../../src/shared/prompt.js', () => ({ canPrompt: vi.fn(), pickSkills: vi.fn() }));
+vi.mock('../../../../src/shared/prompt.js', () => ({ canPrompt: vi.fn(), pickNames: vi.fn() }));
 
 let box: Sandbox;
 
 beforeEach(async () => {
   vi.mocked(linkSkill).mockReset().mockResolvedValue();
   vi.mocked(canPrompt).mockReset().mockReturnValue(false);
-  vi.mocked(pickSkills).mockReset();
+  vi.mocked(pickNames).mockReset();
   box = sandbox();
   await box.register();
 });
@@ -108,11 +108,11 @@ describe('gemini skills install, choosing interactively', () => {
     box.skill('gamma');
     box.install('alpha');
     vi.mocked(canPrompt).mockReturnValue(true);
-    vi.mocked(pickSkills).mockResolvedValue(['beta']);
+    vi.mocked(pickNames).mockResolvedValue(['beta']);
 
     const result = await GeminiSkillsInstall.run([]);
 
-    const offered = vi.mocked(pickSkills).mock.calls[0][1].map((skill) => skill.name);
+    const offered = vi.mocked(pickNames).mock.calls[0][1].map((skill) => skill.name);
     expect(offered).toStrictEqual(['beta', 'gamma']);
     expect(vi.mocked(linkSkill).mock.calls).toStrictEqual([[beta]]);
     expect(result).toStrictEqual({ changed: ['beta'], skipped: [] });
@@ -121,7 +121,7 @@ describe('gemini skills install, choosing interactively', () => {
   it('changes nothing when the picker is cancelled', async () => {
     box.skill('alpha');
     vi.mocked(canPrompt).mockReturnValue(true);
-    vi.mocked(pickSkills).mockResolvedValue(undefined);
+    vi.mocked(pickNames).mockResolvedValue(undefined);
 
     const result = await GeminiSkillsInstall.run([]);
 
@@ -136,7 +136,7 @@ describe('gemini skills install, choosing interactively', () => {
 
     await GeminiSkillsInstall.run([]);
 
-    expect(pickSkills).not.toHaveBeenCalled();
+    expect(pickNames).not.toHaveBeenCalled();
   });
 
   it('refuses with exit 2, rather than hanging, when there is no terminal to ask in', async () => {
@@ -146,7 +146,7 @@ describe('gemini skills install, choosing interactively', () => {
       message: expect.stringMatching(/with --skill/) as unknown,
       oclif: { exit: 2 },
     });
-    expect(pickSkills).not.toHaveBeenCalled();
+    expect(pickNames).not.toHaveBeenCalled();
   });
 
   it('never prompts under --json, even at a terminal', async () => {
@@ -158,7 +158,7 @@ describe('gemini skills install, choosing interactively', () => {
     try {
       await GeminiSkillsInstall.run(['--json']).catch(() => undefined);
 
-      expect(pickSkills).not.toHaveBeenCalled();
+      expect(pickNames).not.toHaveBeenCalled();
       const written = stderr.mock.calls.map(([chunk]) => String(chunk)).join('');
       expect(JSON.parse(written.trim().split('\n').at(-1) ?? '')).toMatchObject({
         error: { name: 'CliError', exitCode: 2 },

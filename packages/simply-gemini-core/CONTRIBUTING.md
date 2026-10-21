@@ -1,6 +1,6 @@
 # Contributing to @simplysf/simply-gemini-core
 
-Skill discovery, the skill-source registry, and the selection rules behind `simply gemini`. This package is part of the [`simply-gemini`](https://github.com/SimplySF/simply-gemini) monorepo.
+Skill and subagent discovery, the source registries, and the selection rules behind `simply gemini`. This package is part of the [`simply-gemini`](https://github.com/SimplySF/simply-gemini) monorepo.
 
 **Start with the [root CONTRIBUTING.md](https://github.com/SimplySF/simply-gemini/blob/main/CONTRIBUTING.md).** This file covers only what is specific to this package.
 

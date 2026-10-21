@@ -17,21 +17,27 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { registerSkillSource, skillsDir } from '@simplysf/simply-gemini-core';
+import { agentsDir, registerAgentSource, registerSkillSource, skillsDir } from '@simplysf/simply-gemini-core';
 
 /**
- * A throwaway home directory with a registered skill source in it. Commands read the home
+ * A throwaway home directory with a skill source and a subagent source beside it. Commands read the home
  * directory through `os.homedir()`, which honours USERPROFILE on Windows and HOME elsewhere, so
  * both are pointed here and put back afterwards.
  */
 export interface Sandbox {
   readonly home: string;
   readonly source: string;
+  readonly agentSource: string;
   /** Creates `<source>/<relative>/SKILL.md` and returns the skill directory. */
   skill(relative: string): string;
   /** Marks a skill installed the way Gemini does: a directory under ~/.gemini/skills. */
   install(name: string): void;
   register(id?: string): Promise<void>;
+  /** Creates `<agentSource>/<relative>` with a description, and returns the file. */
+  agent(relative: string): string;
+  /** Marks a subagent installed the way Gemini expects: ~/.gemini/agents/<name>.md. */
+  installAgent(name: string, content?: string): string;
+  registerAgents(id?: string): Promise<void>;
   restore(): void;
 }
 
@@ -39,8 +45,10 @@ export function sandbox(): Sandbox {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'simply-gemini-cli-'));
   const home = path.join(root, 'home');
   const source = path.join(root, 'source');
+  const agentSource = path.join(root, 'agents');
   fs.mkdirSync(home);
   fs.mkdirSync(source);
+  fs.mkdirSync(agentSource);
 
   const saved = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };
   process.env.HOME = home;
@@ -49,6 +57,7 @@ export function sandbox(): Sandbox {
   return {
     home,
     source,
+    agentSource,
     skill(relative: string): string {
       const dir = path.join(source, relative);
       fs.mkdirSync(dir, { recursive: true });
@@ -60,6 +69,21 @@ export function sandbox(): Sandbox {
     },
     async register(id = 'team'): Promise<void> {
       await registerSkillSource(id, source, undefined, { home });
+    },
+    agent(relative: string): string {
+      const file = path.join(agentSource, relative);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, `---\ndescription: ${path.basename(file, '.md')} subagent\n---\nYou help.\n`);
+      return file;
+    },
+    installAgent(name: string, content = 'installed\n'): string {
+      const file = path.join(agentsDir({ home }), `${name}.md`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content);
+      return file;
+    },
+    async registerAgents(id = 'team'): Promise<void> {
+      await registerAgentSource(id, agentSource, undefined, { home });
     },
     restore(): void {
       for (const [key, value] of Object.entries(saved)) {

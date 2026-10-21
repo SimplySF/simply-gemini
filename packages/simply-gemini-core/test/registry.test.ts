@@ -20,8 +20,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ConfigError, NotFoundError } from '../src/errors.js';
 import {
+  deregisterAgentSource,
   deregisterSkillSource,
   readRegistry,
+  registerAgentSource,
   registerSkillSource,
   registryFile,
   writeRegistry,
@@ -146,5 +148,34 @@ describe('writeRegistry', () => {
     await writeRegistry({ registrations: [] }, { home });
 
     expect(fs.readdirSync(path.join(home, '.gemini'))).toStrictEqual(['skills-registry.json']);
+  });
+});
+
+describe('the subagent registry', () => {
+  it('keeps the file at ~/.gemini/agents-registry.json, where the sf plugin keeps it', () => {
+    expect(registryFile({ home, kind: 'agents' })).toBe(path.join(home, '.gemini', 'agents-registry.json'));
+  });
+
+  it('is separate from the skill registry', async () => {
+    const { entry } = await registerAgentSource('agents', dir('agents'), 'Team subagents', { home });
+    await registerSkillSource('skills', dir('skills'), undefined, { home });
+
+    expect((await readRegistry({ home, kind: 'agents' })).registrations).toStrictEqual([entry]);
+    expect((await readRegistry({ home })).registrations.map((skill) => skill.id)).toStrictEqual(['skills']);
+  });
+
+  it('deregisters by id, and names the subagent registry when the id is unknown', async () => {
+    await registerAgentSource('team', dir('agents'), undefined, { home });
+
+    await expect(deregisterAgentSource('nope', { home })).rejects.toThrow(/No subagent source is registered as "nope"/);
+    expect((await deregisterAgentSource('team', { home })).id).toBe('team');
+    expect((await readRegistry({ home, kind: 'agents' })).registrations).toStrictEqual([]);
+  });
+
+  it('refuses a malformed file the same way, naming the subagent registry', async () => {
+    fs.mkdirSync(path.join(home, '.gemini'), { recursive: true });
+    fs.writeFileSync(registryFile({ home, kind: 'agents' }), 'null');
+
+    await expect(readRegistry({ home, kind: 'agents' })).rejects.toThrow(/subagent registry .* expected shape/);
   });
 });

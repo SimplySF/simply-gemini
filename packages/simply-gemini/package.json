@@ -1,6 +1,6 @@
 {
   "name": "@simplysf/simply-gemini",
-  "description": "Command-line interface for managing Gemini CLI skills",
+  "description": "Command-line interface for managing Gemini CLI skills and subagents",
   "version": "0.1.0",
   "author": "@ClayChipps",
   "homepage": "https://github.com/SimplySF/simply-gemini",
@@ -24,6 +24,7 @@
     "gemini",
     "gemini-cli",
     "skills",
+    "subagents",
     "simply"
   ],
   "license": "Apache-2.0",
@@ -49,6 +50,9 @@
     "topics": {
       "gemini": {
         "description": "Work with the Gemini CLI."
+      },
+      "gemini:agents": {
+        "description": "Install, uninstall, and find Gemini CLI subagents."
       },
       "gemini:skills": {
         "description": "Install, uninstall, and find Gemini CLI skills."

@@ -1,6 +1,6 @@
 ---
 title: Get Started
-description: Requirements, installation, and installing a first skill with simply gemini.
+description: Requirements, installation, and installing a first skill and subagent with simply gemini.
 ---
 
 ## Requirements
@@ -53,3 +53,18 @@ Start Gemini and the skill is there. To remove it:
 ```sh
 simply gemini skills uninstall --skill code-reviewer
 ```
+
+## Install a subagent
+
+Subagents work the same way, under `simply gemini agents`. A subagent is a Markdown file, and
+installing one copies it into `~/.gemini/agents`, so the Gemini CLI does not need to be on your PATH
+for these:
+
+```sh
+simply gemini agents register --id my-team --path ~/src/team-agents
+simply gemini agents list --available
+simply gemini agents install --agent code-reviewer
+```
+
+An installed subagent is a copy. After its source changes, reinstall it with `--force` — see
+[Subagent sources](/guides/agent-sources/).

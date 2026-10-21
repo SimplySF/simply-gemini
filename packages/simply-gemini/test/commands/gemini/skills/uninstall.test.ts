@@ -17,7 +17,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GeminiSkillsUninstall from '../../../../src/commands/gemini/skills/uninstall.js';
 import { uninstallSkill } from '../../../../src/shared/gemini-cli.js';
-import { canPrompt, pickSkills } from '../../../../src/shared/prompt.js';
+import { canPrompt, pickNames } from '../../../../src/shared/prompt.js';
 import { sandbox, type Sandbox } from '../../../helpers.js';
 
 vi.mock('../../../../src/shared/gemini-cli.js', async (importOriginal) => ({
@@ -25,14 +25,14 @@ vi.mock('../../../../src/shared/gemini-cli.js', async (importOriginal) => ({
   linkSkill: vi.fn(),
   uninstallSkill: vi.fn(),
 }));
-vi.mock('../../../../src/shared/prompt.js', () => ({ canPrompt: vi.fn(), pickSkills: vi.fn() }));
+vi.mock('../../../../src/shared/prompt.js', () => ({ canPrompt: vi.fn(), pickNames: vi.fn() }));
 
 let box: Sandbox;
 
 beforeEach(async () => {
   vi.mocked(uninstallSkill).mockReset().mockResolvedValue();
   vi.mocked(canPrompt).mockReset().mockReturnValue(false);
-  vi.mocked(pickSkills).mockReset();
+  vi.mocked(pickNames).mockReset();
   box = sandbox();
   await box.register();
 });
@@ -86,11 +86,11 @@ describe('gemini skills uninstall', () => {
     box.skill('beta');
     box.install('beta');
     vi.mocked(canPrompt).mockReturnValue(true);
-    vi.mocked(pickSkills).mockResolvedValue(['beta']);
+    vi.mocked(pickNames).mockResolvedValue(['beta']);
 
     await GeminiSkillsUninstall.run([]);
 
-    expect(vi.mocked(pickSkills).mock.calls[0][1].map((skill) => skill.name)).toStrictEqual(['beta']);
+    expect(vi.mocked(pickNames).mock.calls[0][1].map((skill) => skill.name)).toStrictEqual(['beta']);
     expect(vi.mocked(uninstallSkill).mock.calls).toStrictEqual([['beta']]);
   });
 });

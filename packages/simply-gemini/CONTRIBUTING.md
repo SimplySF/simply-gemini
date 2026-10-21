@@ -22,15 +22,18 @@ pnpm run readme      # regenerate the command reference in README.md
 
 Not here, mostly. A command parses flags, calls into `@simplysf/simply-gemini-core`, renders the
 result, and returns the value oclif prints under `--json`. Discovery, the registry, and the rules
-for which named skills are acted on or skipped all belong in core.
+for which named skills or subagents are acted on or skipped all belong in core — so does copying a
+subagent into place, which is a file operation rather than a process.
 
-Three things are deliberately here and nowhere else:
+Four things are deliberately here and nowhere else:
 
 - [`src/shared/gemini-cli.ts`](src/shared/gemini-cli.ts) — the only code that runs a process.
 - [`src/shared/prompt.ts`](src/shared/prompt.ts) — the interactive picker, and the check for
   whether there is a terminal to show it on.
 - [`src/shared/skill-change.ts`](src/shared/skill-change.ts) — the flow `install` and `uninstall`
   share; each of them only supplies a direction and the gemini command to run.
+- [`src/shared/agent-change.ts`](src/shared/agent-change.ts) — the same for `gemini agents`, plus
+  the warnings every agent command prints about sources and names discovery left out.
 
 ## Adding a command
 
@@ -43,8 +46,8 @@ Three things are deliberately here and nowhere else:
 
 ## Printing
 
-Use `this.logSafe()`, not `this.log()`, for anything that came from a skill source: skill names,
-descriptions, paths. `formatTable` from core sanitises its cells already.
+Use `this.logSafe()`, not `this.log()`, for anything that came from a skill or subagent source:
+names, descriptions, paths. `formatTable` from core sanitises its cells already.
 
 ## Testing
 

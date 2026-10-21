@@ -16,8 +16,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { subdirectories } from './entries.js';
 import { ConfigError, NotFoundError } from './errors.js';
-import { geminiDir, readRegistry, type GeminiHomeOptions, type RegistryEntry } from './registry.js';
+import { readDescription } from './front-matter.js';
+import { geminiDir, partitionSources, readRegistry, type GeminiHomeOptions, type RegistryEntry } from './registry.js';
 
 /** The file that makes a directory a skill. */
 export const SKILL_FILE = 'SKILL.md';
@@ -59,53 +61,6 @@ export function assertSkillName(name: string): void {
   if (name === '' || name === '.' || name === '..' || /[/\\]/.test(name)) {
     throw new ConfigError(`"${name}" is not a skill name. A skill name is a single directory name.`);
   }
-}
-
-/**
- * Reads `description:` out of a `SKILL.md`'s YAML front matter.
- *
- * Only the front matter is searched. The plugin this was ported from matched the first
- * `description:` anywhere in the file, so a skill whose body documented its own front matter could
- * end up described by its example.
- */
-export function readDescription(content: string): string | undefined {
-  const lines = content.split(/\r?\n/);
-  if (lines[0]?.trim() !== '---') return undefined;
-  const end = lines.findIndex((line, index) => index > 0 && line.trim() === '---');
-  const frontMatter = lines.slice(1, end === -1 ? lines.length : end);
-
-  const start = frontMatter.findIndex((line) => line.startsWith('description:'));
-  if (start === -1) return undefined;
-  const value = frontMatter[start].slice('description:'.length).trim();
-
-  // A block scalar (`>` or `|`, optionally with a chomping indicator) continues on the indented
-  // lines that follow it. Folding them onto one line is all a listing needs.
-  if (/^[>|][+-]?$/.test(value) || value === '') {
-    const continuation: string[] = [];
-    for (const line of frontMatter.slice(start + 1)) {
-      if (!/^\s+\S/.test(line)) break;
-      continuation.push(line.trim());
-    }
-    const folded = continuation.join(' ');
-    return folded === '' ? undefined : folded;
-  }
-
-  const quoted = /^(["'])(.*)\1$/.exec(value);
-  return quoted ? quoted[2] : value;
-}
-
-/** Subdirectories of `dir`, following symbolic links, sorted by name. Missing or unreadable is empty. */
-async function subdirectories(dir: string): Promise<string[]> {
-  const entries = await fs.promises.readdir(dir, { withFileTypes: true }).catch(() => []);
-  const checked = await Promise.all(
-    entries.map(async (entry) => {
-      if (entry.isDirectory()) return entry.name;
-      if (!entry.isSymbolicLink()) return undefined;
-      const stat = await fs.promises.stat(path.join(dir, entry.name)).catch(() => undefined);
-      return stat?.isDirectory() ? entry.name : undefined;
-    }),
-  );
-  return checked.filter((name): name is string => name !== undefined).sort();
 }
 
 async function readSkillFile(dir: string): Promise<{ description?: string } | undefined> {
@@ -160,14 +115,7 @@ async function scanSource(root: string): Promise<Found[]> {
  */
 export async function discoverSkills(options: GeminiHomeOptions = {}): Promise<Discovery> {
   const { registrations } = await readRegistry(options);
-  const present = await Promise.all(
-    registrations.map(async (entry) => {
-      const stat = await fs.promises.stat(entry.path).catch(() => undefined);
-      return stat?.isDirectory() === true;
-    }),
-  );
-  const sources = registrations.filter((_, index) => present[index]);
-  const missingSources = registrations.filter((_, index) => !present[index]);
+  const { present: sources, missing: missingSources } = await partitionSources(registrations);
 
   const installedDir = skillsDir(options);
   const installedNames = new Set(await subdirectories(installedDir));
@@ -195,14 +143,14 @@ export async function discoverSkills(options: GeminiHomeOptions = {}): Promise<D
 }
 
 /**
- * Groups skills for a picker, by category in first-seen order. A skill with no category is listed
- * under {@link DEFAULT_CATEGORY}.
+ * Groups skills or subagents for a picker, by category in first-seen order. One with no category
+ * is listed under {@link DEFAULT_CATEGORY}.
  */
-export function groupByCategory(skills: readonly Skill[]): Map<string, Skill[]> {
-  const groups = new Map<string, Skill[]>();
-  for (const skill of skills) {
-    const key = skill.category ?? DEFAULT_CATEGORY;
-    groups.set(key, [...(groups.get(key) ?? []), skill]);
+export function groupByCategory<T extends { readonly category?: string }>(items: readonly T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const key = item.category ?? DEFAULT_CATEGORY;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
   }
   return groups;
 }
