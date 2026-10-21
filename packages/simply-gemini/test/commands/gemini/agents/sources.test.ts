@@ -19,6 +19,7 @@ import path from 'node:path';
 import { readRegistry } from '@simplysf/simply-gemini-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GeminiAgentsDeregister from '../../../../src/commands/gemini/agents/deregister.js';
+import GeminiAgentsInstall from '../../../../src/commands/gemini/agents/install.js';
 import GeminiAgentsList from '../../../../src/commands/gemini/agents/list.js';
 import GeminiAgentsRegister from '../../../../src/commands/gemini/agents/register.js';
 import { sandbox, type Sandbox } from '../../../helpers.js';
@@ -89,6 +90,19 @@ describe('gemini agents list', () => {
   it('filters to installed, or to not yet installed', async () => {
     expect((await GeminiAgentsList.run(['--installed'])).map((agent) => agent.name)).toStrictEqual(['beta', 'orphan']);
     expect((await GeminiAgentsList.run(['--available'])).map((agent) => agent.name)).toStrictEqual(['alpha']);
+  });
+
+  it('lists only installed copies that differ from their source with --outdated', async () => {
+    // beta was installed with different content from its source; orphan has no source to differ from.
+    await GeminiAgentsInstall.run(['-a', 'alpha']);
+
+    const agents = await GeminiAgentsList.run(['--outdated']);
+
+    expect(agents.map((agent) => [agent.name, agent.installed, agent.outdated])).toStrictEqual([['beta', true, true]]);
+  });
+
+  it('refuses --outdated with --available', async () => {
+    await expect(GeminiAgentsList.run(['--outdated', '--available'])).rejects.toMatchObject({ oclif: { exit: 2 } });
   });
 
   it('warns about a file whose name is unusable, without listing it', async () => {

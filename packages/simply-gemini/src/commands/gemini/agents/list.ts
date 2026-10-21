@@ -24,11 +24,14 @@ export default class GeminiAgentsList extends AgentCommand<typeof GeminiAgentsLi
     'Shows every subagent the registered sources provide, and every subagent installed under ' +
     '~/.gemini/agents — including one copied there some other way, which is listed with no source. ' +
     'When two sources provide a subagent with the same name, the source registered first wins, because ' +
-    'Gemini loads a subagent by its name and can hold only one of them.';
+    'Gemini loads a subagent by its name and can hold only one of them.\n\n' +
+    'An installed subagent is a copy of its source file. INSTALLED reads "outdated" when the source ' +
+    'file has changed since it was installed; `install --force` updates it.';
 
   public static override readonly examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --available',
+    '<%= config.bin %> <%= command.id %> --outdated',
     '<%= config.bin %> <%= command.id %> --installed --json',
   ];
 
@@ -40,7 +43,11 @@ export default class GeminiAgentsList extends AgentCommand<typeof GeminiAgentsLi
     }),
     available: Flags.boolean({
       summary: 'List only subagents that are not yet installed.',
-      exclusive: ['installed'],
+      exclusive: ['installed', 'outdated'],
+      default: false,
+    }),
+    outdated: Flags.boolean({
+      summary: 'List only installed subagents whose source file has changed since they were installed.',
       default: false,
     }),
   };
@@ -49,7 +56,10 @@ export default class GeminiAgentsList extends AgentCommand<typeof GeminiAgentsLi
     const { agents } = await this.discover();
 
     const shown = agents.filter(
-      (agent) => (!this.flags.installed || agent.installed) && (!this.flags.available || !agent.installed),
+      (agent) =>
+        (!this.flags.installed || agent.installed) &&
+        (!this.flags.available || !agent.installed) &&
+        (!this.flags.outdated || agent.outdated),
     );
     if (shown.length === 0) {
       this.log(

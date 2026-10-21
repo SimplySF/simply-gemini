@@ -75,7 +75,7 @@ export const skillColumns: ReadonlyArray<Column<Skill>> = [
 /** The columns `gemini agents list` renders, in the same order as skills. */
 export const agentColumns: ReadonlyArray<Column<Agent>> = [
   { header: 'NAME', value: (agent) => agent.name },
-  { header: 'INSTALLED', value: (agent) => (agent.installed ? 'yes' : 'no') },
+  { header: 'INSTALLED', value: (agent) => (agent.installed ? (agent.outdated ? 'outdated' : 'yes') : 'no') },
   { header: 'CATEGORY', value: (agent) => agent.category },
   { header: 'SOURCE', value: (agent) => agent.source },
   { header: 'DESCRIPTION', value: (agent) => agent.description },

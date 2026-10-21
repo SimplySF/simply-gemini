@@ -94,13 +94,14 @@ describe('discoverAgents', () => {
     const { agents } = await discoverAgents({ home });
 
     expect(agents).toStrictEqual([
-      { name: 'reviewer', path: flat, description: 'Reviews code.', installed: false, source: 'team' },
+      { name: 'reviewer', path: flat, description: 'Reviews code.', installed: false, outdated: false, source: 'team' },
       {
         name: 'apex-doc',
         path: nested,
         description: 'Writes ApexDoc.',
         category: 'apex',
         installed: false,
+        outdated: false,
         source: 'team',
       },
     ]);
@@ -151,6 +152,28 @@ describe('discoverAgents', () => {
     expect(agents[2]).toMatchObject({ path: orphan, description: 'Copied in by hand.' });
   });
 
+  it('marks an installed subagent outdated when its source file has changed since', async () => {
+    agent('src/same.md');
+    const changed = agent('src/changed.md');
+    agent('src/absent.md');
+    await registerAgentSource('team', path.join(root, 'src'), undefined, { home });
+    for (const found of (await discoverAgents({ home })).agents) {
+      // eslint-disable-next-line no-await-in-loop -- two small copies; order does not matter
+      if (found.name !== 'absent') await installAgent(found, { home });
+    }
+    install('hand-made');
+    fs.appendFileSync(changed, 'A new instruction.\n');
+
+    const { agents } = await discoverAgents({ home });
+
+    expect(agents.map((found) => [found.name, found.installed, found.outdated])).toStrictEqual([
+      ['absent', false, false],
+      ['changed', true, true],
+      ['same', true, false],
+      ['hand-made', true, false],
+    ]);
+  });
+
   it('lets the first registered source win a name, and the first file within a source', async () => {
     const first = agent('one/reviewer.md');
     agent('one/apex/reviewer.md');
@@ -178,9 +201,9 @@ describe('discoverAgents', () => {
 });
 
 describe('selectAgents', () => {
-  const available: Agent = { name: 'a', path: '/s/a.md', installed: false, source: 'team' };
-  const installed: Agent = { name: 'b', path: '/s/b.md', installed: true, source: 'team' };
-  const orphan: Agent = { name: 'c', path: '/h/c.md', installed: true };
+  const available: Agent = { name: 'a', path: '/s/a.md', installed: false, outdated: false, source: 'team' };
+  const installed: Agent = { name: 'b', path: '/s/b.md', installed: true, outdated: false, source: 'team' };
+  const orphan: Agent = { name: 'c', path: '/h/c.md', installed: true, outdated: false };
   const all = [available, installed, orphan];
 
   it('installs what is not installed and skips what is', () => {
@@ -228,7 +251,7 @@ describe('installAgent and uninstallAgent', () => {
     const file = agent('src/reviewer.md', {}, 'new version\n');
     install('reviewer', 'old version\n');
 
-    await installAgent({ name: 'reviewer', path: file, installed: true, source: 'team' }, { home });
+    await installAgent({ name: 'reviewer', path: file, installed: true, outdated: false, source: 'team' }, { home });
 
     expect(fs.readFileSync(path.join(agentsDir({ home }), 'reviewer.md'), 'utf8')).toBe('new version\n');
   });
@@ -245,7 +268,7 @@ describe('installAgent and uninstallAgent', () => {
       context.skip(); // Windows without Developer Mode cannot create one
     }
 
-    await installAgent({ name: 'reviewer', path: file, installed: true, source: 'team' }, { home });
+    await installAgent({ name: 'reviewer', path: file, installed: true, outdated: false, source: 'team' }, { home });
 
     expect(fs.lstatSync(target).isSymbolicLink()).toBe(false);
     expect(fs.readFileSync(target, 'utf8')).toBe('new version\n');
@@ -253,11 +276,14 @@ describe('installAgent and uninstallAgent', () => {
   });
 
   it('refuses a subagent with no source or an unsafe name', async () => {
-    await expect(installAgent({ name: 'c', path: '/h/c.md', installed: true }, { home })).rejects.toThrow(
-      NotFoundError,
-    );
     await expect(
-      installAgent({ name: '../x', path: agent('src/x.md'), installed: false, source: 'team' }, { home }),
+      installAgent({ name: 'c', path: '/h/c.md', installed: true, outdated: false }, { home }),
+    ).rejects.toThrow(NotFoundError);
+    await expect(
+      installAgent(
+        { name: '../x', path: agent('src/x.md'), installed: false, outdated: false, source: 'team' },
+        { home },
+      ),
     ).rejects.toThrow(ConfigError);
   });
 

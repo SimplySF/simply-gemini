@@ -20,7 +20,7 @@
     "command": "gemini:agents:list",
     "flagAliases": [],
     "flagChars": [],
-    "flags": ["available", "installed", "json"],
+    "flags": ["available", "installed", "json", "outdated"],
     "plugin": "@simplysf/simply-gemini"
   },
   {

@@ -95,9 +95,11 @@ export abstract class AgentChangeCommand<T extends typeof Command> extends Agent
       named === undefined ? await this.choose(agents) : selectAgents(agents, named, this.action, { force: this.force });
     for (const agent of skipped) {
       this.logSafe(
-        this.action === 'install'
-          ? `${agent.name} is already installed; skipping. Pass --force to reinstall it.`
-          : `${agent.name} is not installed; skipping.`,
+        this.action === 'uninstall'
+          ? `${agent.name} is not installed; skipping.`
+          : agent.outdated
+            ? `${agent.name} is installed, but its source has changed since; skipping. Pass --force to update it.`
+            : `${agent.name} is already installed; skipping. Pass --force to reinstall it.`,
       );
     }
 
@@ -111,13 +113,7 @@ export abstract class AgentChangeCommand<T extends typeof Command> extends Agent
       installing ? agent.source !== undefined && (this.force || !agent.installed) : agent.installed,
     );
     if (candidates.length === 0) {
-      this.log(
-        installing
-          ? agents.some((agent) => agent.source !== undefined)
-            ? 'Every available subagent is already installed. Pass --force to reinstall. Nothing to do.'
-            : 'No subagents found. Register a directory of them with: simply gemini agents register --id <id> --path <dir>'
-          : 'No subagents are installed. Nothing to do.',
-      );
+      this.log(installing ? this.nothingToInstall(agents) : 'No subagents are installed. Nothing to do.');
       return { targets: [], skipped: [] };
     }
 
@@ -136,6 +132,22 @@ export abstract class AgentChangeCommand<T extends typeof Command> extends Agent
     }
     if (picked.length === 0) this.log('No subagents selected. Nothing changed.');
     return { targets: candidates.filter((agent) => picked.includes(agent.name)), skipped: [] };
+  }
+
+  /** Why `install` with no `--agent` has nothing to offer, and what would change that. */
+  // eslint-disable-next-line class-methods-use-this -- message building; it needs no state
+  private nothingToInstall(agents: readonly Agent[]): string {
+    if (!agents.some((agent) => agent.source !== undefined)) {
+      return 'No subagents found. Register a directory of them with: simply gemini agents register --id <id> --path <dir>';
+    }
+    const outdated = agents.filter((agent) => agent.outdated).length;
+    if (outdated === 0)
+      return 'Every available subagent is already installed. Pass --force to reinstall. Nothing to do.';
+    return (
+      `Every available subagent is already installed, but ${outdated} of them ` +
+      `${outdated === 1 ? 'has' : 'have'} changed in the source since. ` +
+      'See them with `simply gemini agents list --outdated`, and update them with --force.'
+    );
   }
 
   /**
