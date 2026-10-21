@@ -83,7 +83,7 @@ importers:
         specifier: ^4.11.2
         version: 4.14.0
       '@simplysf/simply-gemini-core':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.3.0
         version: link:../simply-gemini-core
       execa:
         specifier: ^10.2.0
