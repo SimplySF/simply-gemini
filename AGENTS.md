@@ -11,6 +11,8 @@ shared module, or how `gemini` is invoked; it defines when a design document is 
   `sf gemini skills` plugin this was ported from.
 - [Installing subagents](docs/design/0002-agents-install.md): the same for `gemini agents`, why a
   subagent is copied rather than linked, the name check, and what differs from the sf plugin.
+- [Outdated subagents](docs/design/0003-outdated-agents.md): how an installed copy is compared
+  with its source, and where that shows up.
 
 The package [README](packages/simply-gemini/README.md) is the generated user-facing command
 reference. Update command metadata first, then regenerate it as described in `CONTRIBUTING.md`.

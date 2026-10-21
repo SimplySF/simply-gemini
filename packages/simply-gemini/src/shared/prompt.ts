@@ -41,11 +41,17 @@ export interface Pickable {
   readonly description?: string;
   readonly category?: string;
   readonly installed?: boolean;
+  readonly outdated?: boolean;
 }
 
 export interface PickOptions {
-  /** Label the items that are already installed, for a list that offers both. */
+  /** Label the items that are already installed, and those whose copy is outdated. */
   readonly markInstalled?: boolean;
+}
+
+function status(item: Pickable): string {
+  if (item.outdated) return ' (outdated)';
+  return item.installed ? ' (installed)' : '';
 }
 
 /**
@@ -61,7 +67,7 @@ export async function pickNames(
   for (const [category, members] of groupByCategory(items)) {
     options[stripControlOneLine(category)] = members.map((item) => {
       const shown = hint(item.description);
-      const label = `${stripControlOneLine(item.name)}${markInstalled && item.installed ? ' (installed)' : ''}`;
+      const label = `${stripControlOneLine(item.name)}${markInstalled ? status(item) : ''}`;
       return { value: item.name, label, ...(shown ? { hint: shown } : {}) };
     });
   }

@@ -73,6 +73,26 @@ describe('gemini agents install --agent', () => {
     expect(installedContent('reviewer')).not.toBe('old\n');
   });
 
+  it('says when a skipped subagent is outdated, and only then', async () => {
+    box.agent('stale.md');
+    box.agent('current.md');
+    box.installAgent('stale', 'old\n');
+    await GeminiAgentsInstall.run(['-a', 'current']);
+    const log = vi.spyOn(GeminiAgentsInstall.prototype, 'log');
+
+    try {
+      await GeminiAgentsInstall.run(['-a', 'stale', '-a', 'current']);
+
+      const lines = log.mock.calls.map(([line]) => String(line));
+      expect(lines).toContain(
+        'stale is installed, but its source has changed since; skipping. Pass --force to update it.',
+      );
+      expect(lines).toContain('current is already installed; skipping. Pass --force to reinstall it.');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('fails with exit 2 on an unknown subagent, before installing anything', async () => {
     box.agent('reviewer.md');
 
@@ -158,6 +178,22 @@ describe('gemini agents install, choosing interactively', () => {
     await GeminiAgentsInstall.run([]);
 
     expect(pickNames).not.toHaveBeenCalled();
+  });
+
+  it('points at outdated subagents when nothing is left to install', async () => {
+    box.agent('alpha.md');
+    box.installAgent('alpha', 'old\n');
+    vi.mocked(canPrompt).mockReturnValue(true);
+    const log = vi.spyOn(GeminiAgentsInstall.prototype, 'log');
+
+    try {
+      await GeminiAgentsInstall.run([]);
+
+      expect(log).toHaveBeenCalledWith(expect.stringMatching(/but 1 of them has changed in the source since/));
+      expect(pickNames).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it('refuses with exit 2, rather than hanging, when there is no terminal to ask in', async () => {

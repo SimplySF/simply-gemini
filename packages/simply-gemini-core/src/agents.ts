@@ -33,6 +33,11 @@ export interface Agent {
   readonly path: string;
   readonly description?: string;
   readonly installed: boolean;
+  /**
+   * Installed from a source whose file has changed since: the installed copy no longer matches it,
+   * and `install --force` would update it. Never true for one no source provides.
+   */
+  readonly outdated: boolean;
   /** The folder it sits in when its source groups subagents one level deep. */
   readonly category?: string;
   /** The id of the registered source that provides it; absent for one installed some other way. */
@@ -143,7 +148,7 @@ export async function discoverAgents(options: GeminiHomeOptions = {}): Promise<A
   );
   const scanned = await Promise.all(sources.map((entry) => scanSource(entry.path)));
 
-  const agents: Agent[] = [];
+  const provided: Array<Found & { readonly source: string }> = [];
   const rejected: RejectedAgent[] = [];
   const seen = new Set<string>();
   for (const [index, found] of scanned.entries()) {
@@ -155,9 +160,17 @@ export async function discoverAgents(options: GeminiHomeOptions = {}): Promise<A
       }
       if (seen.has(agent.name)) continue;
       seen.add(agent.name);
-      agents.push({ ...agent, installed: installedNames.has(agent.name), source });
+      provided.push({ ...agent, source });
     }
   }
+
+  const agents = await Promise.all(
+    provided.map(async (agent): Promise<Agent> => {
+      const installed = installedNames.has(agent.name);
+      const outdated = installed && (await differs(agent.path, agentFile(agent.name, options)));
+      return { ...agent, installed, outdated };
+    }),
+  );
 
   const orphans = [...installedNames].filter((name) => !seen.has(name));
   const orphanAgents = await Promise.all(
@@ -169,11 +182,25 @@ export async function discoverAgents(options: GeminiHomeOptions = {}): Promise<A
         path: file,
         ...(found?.description === undefined ? {} : { description: found.description }),
         installed: true,
+        outdated: false,
       };
     }),
   );
 
   return { agents: [...agents, ...orphanAgents], missingSources, rejected };
+}
+
+/**
+ * Whether two files' contents differ. Compared byte for byte rather than by modification time,
+ * which a `git checkout` resets whether or not anything changed. A file that cannot be read counts
+ * as not differing, so an unreadable copy is reported as it was before rather than failing discovery.
+ */
+async function differs(source: string, installed: string): Promise<boolean> {
+  const [a, b] = await Promise.all([
+    fs.promises.readFile(source).catch(() => undefined),
+    fs.promises.readFile(installed).catch(() => undefined),
+  ]);
+  return a !== undefined && b !== undefined && !a.equals(b);
 }
 
 export interface AgentSelection {

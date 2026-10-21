@@ -47,7 +47,14 @@ Only the front matter is read. Quoted values and folded (`>`) descriptions both 
 ## Installing is copying
 
 The Gemini CLI has no command to install a subagent, so `install` copies the file. Unlike a skill,
-an installed subagent does **not** follow its source: after a `git pull` in the source, run
+an installed subagent does **not** follow its source. `list` shows which copies have fallen behind:
+INSTALLED reads `outdated` when the installed file no longer matches the source file, and
+
+```sh
+simply gemini agents list --outdated
+```
+
+lists only those. To update one, run
 
 ```sh
 simply gemini agents install --agent code-reviewer --force

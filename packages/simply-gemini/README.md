@@ -89,7 +89,8 @@ team-agents/
 
 The name is the `name:` field of the front matter, or the file name without `.md`; it must be
 letters, digits, `.`, `_` and `-`. `install` copies the file to `~/.gemini/agents/<name>.md`, where
-Gemini loads it from. It is a copy, so after the source changes, run `install --force` to update it.
+Gemini loads it from. It is a copy: `list` shows `outdated` once the source changes, and
+`install --force` updates it.
 Sources are recorded in `~/.gemini/agents-registry.json`, the file the Salesforce `sf gemini agents`
 commands use.
 
@@ -163,7 +164,7 @@ EXAMPLES
   $ simply gemini agents deregister --id my-team
 ```
 
-_See code: [lib/commands/gemini/agents/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/agents/deregister.js)_
+_See code: [lib/commands/gemini/agents/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/deregister.js)_
 
 ## `simply gemini agents install`
 
@@ -214,7 +215,7 @@ FLAG DESCRIPTIONS
     With no --agent, the list then offers installed subagents too.
 ```
 
-_See code: [lib/commands/gemini/agents/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/agents/install.js)_
+_See code: [lib/commands/gemini/agents/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/install.js)_
 
 ## `simply gemini agents list`
 
@@ -222,11 +223,12 @@ List subagents from your registered sources, and what is installed.
 
 ```
 USAGE
-  $ simply gemini agents list [--json] [--installed | --available]
+  $ simply gemini agents list [--json] [--installed | --available] [--outdated]
 
 FLAGS
   --available  List only subagents that are not yet installed.
   --installed  List only installed subagents.
+  --outdated   List only installed subagents whose source file has changed since they were installed.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -238,15 +240,20 @@ DESCRIPTION
   one copied there some other way, which is listed with no source. When two sources provide a subagent with the same
   name, the source registered first wins, because Gemini loads a subagent by its name and can hold only one of them.
 
+  An installed subagent is a copy of its source file. INSTALLED reads "outdated" when the source file has changed since
+  it was installed; `install --force` updates it.
+
 EXAMPLES
   $ simply gemini agents list
 
   $ simply gemini agents list --available
 
+  $ simply gemini agents list --outdated
+
   $ simply gemini agents list --installed --json
 ```
 
-_See code: [lib/commands/gemini/agents/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/agents/list.js)_
+_See code: [lib/commands/gemini/agents/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/list.js)_
 
 ## `simply gemini agents register`
 
@@ -282,7 +289,7 @@ EXAMPLES
   $ simply gemini agents register --id @my-org/gemini-agents --path ~/src/gemini-agents --description "Shared team subagents"
 ```
 
-_See code: [lib/commands/gemini/agents/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/agents/register.js)_
+_See code: [lib/commands/gemini/agents/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/register.js)_
 
 ## `simply gemini agents uninstall`
 
@@ -322,7 +329,7 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/agents/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/agents/uninstall.js)_
+_See code: [lib/commands/gemini/agents/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/uninstall.js)_
 
 ## `simply gemini skills deregister`
 
@@ -349,7 +356,7 @@ EXAMPLES
   $ simply gemini skills deregister --id my-team
 ```
 
-_See code: [lib/commands/gemini/skills/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/skills/deregister.js)_
+_See code: [lib/commands/gemini/skills/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/deregister.js)_
 
 ## `simply gemini skills install`
 
@@ -390,7 +397,7 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/skills/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/skills/install.js)_
+_See code: [lib/commands/gemini/skills/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/install.js)_
 
 ## `simply gemini skills list`
 
@@ -422,7 +429,7 @@ EXAMPLES
   $ simply gemini skills list --installed --json
 ```
 
-_See code: [lib/commands/gemini/skills/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/skills/list.js)_
+_See code: [lib/commands/gemini/skills/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/list.js)_
 
 ## `simply gemini skills register`
 
@@ -458,7 +465,7 @@ EXAMPLES
   $ simply gemini skills register --id @my-org/gemini-skills --path ~/src/gemini-skills --description "Shared team skills"
 ```
 
-_See code: [lib/commands/gemini/skills/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/skills/register.js)_
+_See code: [lib/commands/gemini/skills/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/register.js)_
 
 ## `simply gemini skills uninstall`
 
@@ -499,5 +506,5 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/skills/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.1.0/packages/simply-gemini/lib/commands/gemini/skills/uninstall.js)_
+_See code: [lib/commands/gemini/skills/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/uninstall.js)_
 <!-- commandsstop -->

@@ -104,5 +104,5 @@ link; uninstall. CLI tests replace only the picker.
 
 ## Open questions
 
-- Whether `list` should say when an installed copy differs from its source, so a stale subagent is
-  visible without diffing by hand.
+- ~~Whether `list` should say when an installed copy differs from its source.~~ Yes:
+  [0003](0003-outdated-agents.md).
