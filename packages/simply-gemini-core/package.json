@@ -1,7 +1,7 @@
 {
   "name": "@simplysf/simply-gemini-core",
   "description": "Skill and subagent discovery, and the source registries, behind the simply gemini CLI",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "@ClayChipps",
   "homepage": "https://github.com/SimplySF/simply-gemini",
   "bugs": "https://github.com/SimplySF/simply-gemini/issues",
