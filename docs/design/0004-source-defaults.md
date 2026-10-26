@@ -46,12 +46,14 @@ directory, and it is not a `.md`.
 
 **Resolving names.** Each default name is matched against what discovery found **from this source**:
 
-| Name                                                              | Result                                                 |
-| ----------------------------------------------------------------- | ------------------------------------------------------ |
-| Provided by this source, not installed                            | Installed                                              |
-| Provided by this source, already installed (or outdated)          | Skipped and reported, as `install` would. Never forced |
-| Not provided by this source (including a name no file could have) | Warning; not installed                                 |
-| Provided, but shadowed by an earlier-registered source            | Warning naming the source that wins; not installed     |
+| Name                                                              | Result                                                  |
+| ----------------------------------------------------------------- | ------------------------------------------------------- |
+| Provided by this source, not installed                            | Installed                                               |
+| Provided by this source, already installed                        | Skipped and reported, as `install` would. Never forced  |
+| Provided by this source, installed but outdated (subagents)       | Skipped, with the `install --agent <name> --force` hint |
+| Not provided by this source (including a name no file could have) | Warning; not installed                                  |
+| A subagent file discovery rejected for its name                   | Not installed; discovery's own warning is the only one  |
+| Provided, but shadowed by an earlier-registered source            | Warning naming the source that wins; not installed      |
 
 A bad name never fails the registration. The source is someone else's file, and the registration
 itself is valid; refusing it would leave the person unable to use the rest of the source.
@@ -65,9 +67,15 @@ itself is valid; refusing it would leave the person unable to use the rest of th
 The order is: write the registration, discover, install the defaults one at a time through the same
 code `install` uses. The registration is written first, so a failed install never loses it.
 
-- A skill install needs `gemini` on PATH. If it is missing, the registration stands and the command
-  fails (exit 2) with the install hint and a note that the source is registered, so re-running
-  `register` or `skills install` finishes the job.
+- A skill install needs `gemini` on PATH. `register` never needed `gemini` before this flag, so a
+  missing one is not an error: `gemini` is looked for only when a default needs installing, and if
+  it is absent the registration stands, the defaults stay uninstalled (`changed` is empty), and a
+  warning names them with the install hint and the `skills install --skill …` command that finishes
+  the job. If `gemini` disappears between that check and the install, the command fails (exit 2)
+  as `install` does.
+- A failure's message ends with the full `register` command to retry with (`--id`, `--path`, and
+  `--description` when there is one), since re-registering without the description would drop it.
+- The manifest is read alongside discovery, not after it.
 - One default failing does not stop the rest; the command then fails (exit 1) listing failures, as
   `install` does.
 - Under `--json`, nothing is prompted (nothing ever is on this path) and the output gains:
@@ -129,8 +137,11 @@ shadowed and badly-named defaults, for both kinds.
 
 CLI: `register` installs defaults (skills with `gemini` replaced, as the install tests do; agents
 for real into the temporary home); `--no-install-defaults` installs nothing; a malformed manifest
-warns and still registers; a missing `gemini` leaves the registration written and exits 2; a failed
-default exits 1 after attempting the others; the `--json` `defaults` shape.
+warns and still registers; a manifest starting with a BOM is read; `gemini` not on PATH warns,
+names the defaults and still registers, and is not looked for when nothing needs installing;
+`gemini` vanishing mid-install exits 2 with the full `register` retry command; a failed default
+exits 1 after attempting the others; an outdated subagent default gets the `--force` hint; a
+rejected subagent name is warned about once; the `--json` `defaults` shape.
 
 ## Open questions
 

@@ -478,8 +478,8 @@ DESCRIPTION
   registered replaces the earlier entry.
 
   A source can list skills everyone should have in a gemini-source.json at its root ({"defaults": ["skill-name", ...]}).
-  Those are installed straight after registering, which needs the Gemini CLI on your PATH; pass --no-install-defaults to
-  skip them.
+  Those are installed straight after registering, which needs the Gemini CLI on your PATH; without it they are left
+  uninstalled with a warning. Pass --no-install-defaults to skip them.
 
 EXAMPLES
   $ simply gemini skills register --id my-team --path ./skills

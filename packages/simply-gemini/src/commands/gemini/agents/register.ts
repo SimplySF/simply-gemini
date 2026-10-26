@@ -15,10 +15,18 @@
  */
 
 import { Flags } from '@oclif/core';
-import { installAgent, registerAgentSource, stripControl, type RegistryEntry } from '@simplysf/simply-gemini-core';
+import {
+  installAgent,
+  readSourceManifest,
+  registerAgentSource,
+  stripControl,
+  type RegistryEntry,
+} from '@simplysf/simply-gemini-core';
 import { AgentCommand } from '../../../shared/agent-change.js';
 import { applyEach } from '../../../shared/apply-each.js';
+import { kindNoun } from '../../../shared/base-command.js';
 import {
+  closingHint,
   installDefaultsFlag,
   installSourceDefaults,
   NO_DEFAULTS,
@@ -82,31 +90,37 @@ export default class GeminiAgentsRegister extends AgentCommand<typeof GeminiAgen
     }
     this.logSafe(`Registered subagent source "${entry.id}" at ${entry.path}.`);
 
-    const { agents } = await this.discover();
+    const [{ agents, rejected }, manifest] = await Promise.all([
+      this.discover(),
+      this.flags['install-defaults'] ? readSourceManifest(entry.path) : undefined,
+    ]);
     const provided = agents.filter((agent) => agent.source === entry.id);
     const log = (line: string): void => this.logSafe(line);
-    const defaults = this.flags['install-defaults']
-      ? await installSourceDefaults(
-          entry,
-          agents,
-          (targets) => applyEach(targets, (agent) => installAgent(agent), { done: 'installed', noun: 'subagent', log }),
-          { kind: 'agents', warn: (message) => this.warn(stripControl(message)), log },
-        )
-      : NO_DEFAULTS;
+    const defaults =
+      manifest === undefined
+        ? NO_DEFAULTS
+        : await installSourceDefaults(
+            entry,
+            manifest,
+            agents,
+            (targets) =>
+              applyEach(targets, (agent) => installAgent(agent), { done: 'installed', noun: kindNoun('agents'), log }),
+            {
+              kind: 'agents',
+              // discover() has already warned about each of these.
+              rejected: rejected.filter((agent) => agent.source === entry.id).map((agent) => agent.name),
+              warn: (message) => this.warn(stripControl(message)),
+              log,
+            },
+          );
 
     if (provided.length === 0) {
       this.warn(
         'No subagents were found there. A subagent is a .md file other than README.md, directly in the ' +
           'source or one category folder down.',
       );
-    } else if (defaults.changed.length === 0) {
-      this.log(`${provided.length} subagent(s) available. Install them with: simply gemini agents install`);
     } else {
-      const remaining = provided.filter((agent) => !agent.installed).length - defaults.changed.length;
-      this.log(
-        `Installed ${defaults.changed.length} default subagent(s).` +
-          (remaining === 0 ? '' : ` ${remaining} more available: simply gemini agents install`),
-      );
+      this.log(closingHint('agents', provided, defaults));
     }
     return { entry, replaced, agents: provided.length, defaults };
   }

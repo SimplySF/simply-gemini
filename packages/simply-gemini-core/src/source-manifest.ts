@@ -47,7 +47,8 @@ export async function readSourceManifest(sourceDir: string): Promise<SourceManif
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    // Hand-written files often start with a BOM (Notepad, PowerShell), which JSON.parse rejects.
+    parsed = JSON.parse(content.replace(/^\uFEFF/, ''));
   } catch (error) {
     return { defaults: [], problem: `${file} is not valid JSON (${(error as Error).message}).` };
   }
