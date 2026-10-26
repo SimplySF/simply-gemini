@@ -49,6 +49,24 @@ than from a copy. Update the source — `git pull`, say — and the installed sk
 That also means deleting or moving a source breaks the skills installed from it; uninstall them
 first.
 
+## Defaults
+
+A source can name the skills everyone who registers it should have, in a `gemini-source.json` at
+its root:
+
+```json
+{ "defaults": ["code-reviewer", "apex-test-generator"] }
+```
+
+`simply gemini skills register` installs those straight after registering the source. A default
+that is already installed is skipped. A name the source doesn't provide, or that another source
+registered earlier provides instead, is warned about and not installed; it never stops the source
+being registered, and neither does a `gemini-source.json` that isn't valid. Pass
+`--no-install-defaults` to register without installing anything.
+
+Registering the same source again installs any default that is missing, including one you
+uninstalled. Use `--no-install-defaults` when re-registering if you don't want that.
+
 ## Two sources, one name
 
 Gemini installs a skill under its directory name and can hold only one skill per name. When two

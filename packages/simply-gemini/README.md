@@ -164,7 +164,7 @@ EXAMPLES
   $ simply gemini agents deregister --id my-team
 ```
 
-_See code: [lib/commands/gemini/agents/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/deregister.js)_
+_See code: [lib/commands/gemini/agents/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/agents/deregister.js)_
 
 ## `simply gemini agents install`
 
@@ -215,7 +215,7 @@ FLAG DESCRIPTIONS
     With no --agent, the list then offers installed subagents too.
 ```
 
-_See code: [lib/commands/gemini/agents/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/install.js)_
+_See code: [lib/commands/gemini/agents/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/agents/install.js)_
 
 ## `simply gemini agents list`
 
@@ -253,7 +253,7 @@ EXAMPLES
   $ simply gemini agents list --installed --json
 ```
 
-_See code: [lib/commands/gemini/agents/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/list.js)_
+_See code: [lib/commands/gemini/agents/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/agents/list.js)_
 
 ## `simply gemini agents register`
 
@@ -261,13 +261,15 @@ Register a directory of subagents as a subagent source.
 
 ```
 USAGE
-  $ simply gemini agents register -i <value> -p <value> [--json] [-d <value>]
+  $ simply gemini agents register -i <value> -p <value> [--json] [-d <value>] [--install-defaults]
 
 FLAGS
-  -d, --description=<value>  Short description of the source.
-  -i, --id=<value>           (required) Unique id for the source. Used to deregister it, and shown as SOURCE in `list`.
-  -p, --path=<value>         (required) Directory holding the subagents. A relative path is resolved against the current
-                             directory.
+  -d, --description=<value>    Short description of the source.
+  -i, --id=<value>             (required) Unique id for the source. Used to deregister it, and shown as SOURCE in
+                               `list`.
+  -p, --path=<value>           (required) Directory holding the subagents. A relative path is resolved against the
+                               current directory.
+      --[no-]install-defaults  Install the subagents the source lists as defaults.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -283,13 +285,27 @@ DESCRIPTION
   so a source registered with either tool is visible to both. Registering an id or a directory that is already
   registered replaces the earlier entry.
 
+  A source can list subagents everyone should have in a gemini-source.json at its root ({"defaults": ["subagent-name",
+  ...]}). Those are installed straight after registering; one that is already installed is left as it is, even if its
+  source has changed. Pass --no-install-defaults to skip them.
+
 EXAMPLES
   $ simply gemini agents register --id my-team --path ./agents
 
   $ simply gemini agents register --id @my-org/gemini-agents --path ~/src/gemini-agents --description "Shared team subagents"
+
+  Register a source without installing the subagents it lists as defaults:
+
+    $ simply gemini agents register --id my-team --path ./agents --no-install-defaults
+
+FLAG DESCRIPTIONS
+  --[no-]install-defaults  Install the subagents the source lists as defaults.
+
+    A source lists its defaults in gemini-source.json at its root. Pass --no-install-defaults to register the source
+    without installing anything.
 ```
 
-_See code: [lib/commands/gemini/agents/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/register.js)_
+_See code: [lib/commands/gemini/agents/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/agents/register.js)_
 
 ## `simply gemini agents uninstall`
 
@@ -329,7 +345,7 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/agents/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/agents/uninstall.js)_
+_See code: [lib/commands/gemini/agents/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/agents/uninstall.js)_
 
 ## `simply gemini skills deregister`
 
@@ -356,7 +372,7 @@ EXAMPLES
   $ simply gemini skills deregister --id my-team
 ```
 
-_See code: [lib/commands/gemini/skills/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/deregister.js)_
+_See code: [lib/commands/gemini/skills/deregister.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/skills/deregister.js)_
 
 ## `simply gemini skills install`
 
@@ -397,7 +413,7 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/skills/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/install.js)_
+_See code: [lib/commands/gemini/skills/install.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/skills/install.js)_
 
 ## `simply gemini skills list`
 
@@ -429,7 +445,7 @@ EXAMPLES
   $ simply gemini skills list --installed --json
 ```
 
-_See code: [lib/commands/gemini/skills/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/list.js)_
+_See code: [lib/commands/gemini/skills/list.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/skills/list.js)_
 
 ## `simply gemini skills register`
 
@@ -437,13 +453,15 @@ Register a directory of skills as a skill source.
 
 ```
 USAGE
-  $ simply gemini skills register -i <value> -p <value> [--json] [-d <value>]
+  $ simply gemini skills register -i <value> -p <value> [--json] [-d <value>] [--install-defaults]
 
 FLAGS
-  -d, --description=<value>  Short description of the source.
-  -i, --id=<value>           (required) Unique id for the source. Used to deregister it, and shown as SOURCE in `list`.
-  -p, --path=<value>         (required) Directory holding the skills. A relative path is resolved against the current
-                             directory.
+  -d, --description=<value>    Short description of the source.
+  -i, --id=<value>             (required) Unique id for the source. Used to deregister it, and shown as SOURCE in
+                               `list`.
+  -p, --path=<value>           (required) Directory holding the skills. A relative path is resolved against the current
+                               directory.
+      --[no-]install-defaults  Install the skills the source lists as defaults.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -459,13 +477,27 @@ DESCRIPTION
   so a source registered with either tool is visible to both. Registering an id or a directory that is already
   registered replaces the earlier entry.
 
+  A source can list skills everyone should have in a gemini-source.json at its root ({"defaults": ["skill-name", ...]}).
+  Those are installed straight after registering, which needs the Gemini CLI on your PATH; pass --no-install-defaults to
+  skip them.
+
 EXAMPLES
   $ simply gemini skills register --id my-team --path ./skills
 
   $ simply gemini skills register --id @my-org/gemini-skills --path ~/src/gemini-skills --description "Shared team skills"
+
+  Register a source without installing the skills it lists as defaults:
+
+    $ simply gemini skills register --id my-team --path ./skills --no-install-defaults
+
+FLAG DESCRIPTIONS
+  --[no-]install-defaults  Install the skills the source lists as defaults.
+
+    A source lists its defaults in gemini-source.json at its root. Pass --no-install-defaults to register the source
+    without installing anything.
 ```
 
-_See code: [lib/commands/gemini/skills/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/register.js)_
+_See code: [lib/commands/gemini/skills/register.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/skills/register.js)_
 
 ## `simply gemini skills uninstall`
 
@@ -506,5 +538,5 @@ FLAG DESCRIPTIONS
     Without it, you are asked to pick from a list, which needs an interactive terminal.
 ```
 
-_See code: [lib/commands/gemini/skills/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.2.0/packages/simply-gemini/lib/commands/gemini/skills/uninstall.js)_
+_See code: [lib/commands/gemini/skills/uninstall.js](https://github.com/SimplySF/simply-gemini/blob/@simplysf/simply-gemini@0.3.0/packages/simply-gemini/lib/commands/gemini/skills/uninstall.js)_
 <!-- commandsstop -->

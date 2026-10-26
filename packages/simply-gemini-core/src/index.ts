@@ -64,4 +64,12 @@ export {
   type Skill,
   type SkillAction,
 } from './skills.js';
+export {
+  MANIFEST_FILE,
+  readSourceManifest,
+  resolveDefaults,
+  type DefaultsResolution,
+  type SourceManifest,
+  type UnavailableDefault,
+} from './source-manifest.js';
 export { stripControl, stripControlOneLine } from './text.js';
