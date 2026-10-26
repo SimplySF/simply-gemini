@@ -21,6 +21,11 @@ import { CliError, stripControl, type RegistryEntry, type RegistryKind } from '@
 export type GeminiFlags<T extends typeof Command> = Interfaces.InferredFlags<T['flags']>;
 export type CommandArgs<T extends typeof Command> = Interfaces.InferredArgs<T['args']>;
 
+/** What one item of a registry kind is called in messages: "skill" or "subagent". */
+export function kindNoun(kind: RegistryKind): 'skill' | 'subagent' {
+  return kind === 'skills' ? 'skill' : 'subagent';
+}
+
 /** Names the failure for a machine reader: our own errors keep their class name. */
 function errorName(error: unknown, oclifExit: number | undefined): string {
   if (error instanceof CliError) return error.name;
@@ -93,11 +98,11 @@ export abstract class GeminiCommand<T extends typeof Command> extends Command {
    * moved or deleted checkout makes its skills or subagents silently disappear from every listing.
    */
   protected warnMissingSources(missing: readonly RegistryEntry[], kind: RegistryKind = 'skills'): void {
-    const noun = kind === 'skills' ? 'Skill' : 'Subagent';
+    const noun = kindNoun(kind);
     for (const entry of missing) {
       this.warn(
         stripControl(
-          `${noun} source "${entry.id}" is registered at ${entry.path}, which no longer exists. ` +
+          `${noun.charAt(0).toUpperCase()}${noun.slice(1)} source "${entry.id}" is registered at ${entry.path}, which no longer exists. ` +
             `Re-register it, or remove it with: simply gemini ${kind} deregister --id ${entry.id}`,
         ),
       );
