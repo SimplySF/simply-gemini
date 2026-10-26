@@ -1,7 +1,7 @@
 {
   "name": "@simplysf/simply-gemini",
   "description": "Command-line interface for managing Gemini CLI skills and subagents",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "@ClayChipps",
   "homepage": "https://github.com/SimplySF/simply-gemini",
   "bugs": "https://github.com/SimplySF/simply-gemini/issues",
@@ -62,7 +62,7 @@
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "@oclif/core": "^4.11.2",
-    "@simplysf/simply-gemini-core": "workspace:^0.3.0",
+    "@simplysf/simply-gemini-core": "workspace:^0.4.0",
     "execa": "^10.2.0"
   },
   "devDependencies": {

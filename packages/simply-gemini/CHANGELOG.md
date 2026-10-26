@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/SimplySF/simply-gemini/compare/%40simplysf%2Fsimply-gemini%400.3.0...%40simplysf%2Fsimply-gemini%400.4.0) (2026-10-26)
+
+### Features
+
+- install a source's default skills and subagents on register ([#4](https://github.com/SimplySF/simply-gemini/issues/4)) ([693b06d](https://github.com/SimplySF/simply-gemini/commit/693b06d6a56f88ee63cd22ace2242a1aa6312588)), closes [#5](https://github.com/SimplySF/simply-gemini/issues/5)
+
 # [0.3.0](https://github.com/SimplySF/simply-gemini/compare/%40simplysf%2Fsimply-gemini%400.2.0...%40simplysf%2Fsimply-gemini%400.3.0) (2026-10-21)
 
 ### Features
