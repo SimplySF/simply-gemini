@@ -16,6 +16,7 @@
 
 import { Flags, type Command, type Interfaces } from '@oclif/core';
 import { CliError, discoverSkills, selectSkills, type Skill, type SkillAction } from '@simplysf/simply-gemini-core';
+import { applyEach } from './apply-each.js';
 import { GeminiCommand } from './base-command.js';
 import { GeminiNotFoundError } from './gemini-cli.js';
 import { canPrompt, pickNames } from './prompt.js';
@@ -41,6 +42,25 @@ export function skillFlag(verb: string): { skill: Interfaces.OptionFlag<string[]
 }
 
 /**
+ * Runs one `gemini` command per skill through {@link applyEach}. A missing `gemini` would fail
+ * identically for every skill, so it stops the run at once rather than producing one copy of the
+ * same error per skill.
+ */
+export async function applySkills(
+  targets: readonly Skill[],
+  apply: (skill: Skill) => Promise<void>,
+  done: string,
+  log: (message: string) => void,
+): Promise<string[]> {
+  return applyEach(targets, apply, {
+    done,
+    noun: 'skill',
+    log,
+    isFatal: (error) => error instanceof GeminiNotFoundError,
+  });
+}
+
+/**
  * `install` and `uninstall` are the same command run in opposite directions: find the skills that
  * are not yet in the wanted state, choose some — by flag or by picker — and run one `gemini`
  * command per skill. Subclasses supply the direction and the command.
@@ -49,10 +69,6 @@ export abstract class SkillChangeCommand<T extends typeof Command> extends Gemin
   protected abstract readonly action: SkillAction;
   /** Past tense of the action, for messages: "installed", "uninstalled". */
   protected abstract readonly done: string;
-
-  private get doneTitle(): string {
-    return `${this.done.charAt(0).toUpperCase()}${this.done.slice(1)}`;
-  }
 
   public async run(): Promise<SkillChangeResult> {
     const { skills, missingSources } = await discoverSkills();
@@ -96,38 +112,13 @@ export abstract class SkillChangeCommand<T extends typeof Command> extends Gemin
     return { targets: candidates.filter((skill) => picked.includes(skill.name)), skipped: [] };
   }
 
-  /**
-   * Applies the action to each skill in turn, carrying on past a failure so one bad skill does not
-   * strand the rest, then fails the command if anything failed.
-   *
-   * Sequential on purpose: every invocation writes to the same `~/.gemini/skills` directory, and
-   * gemini gives no guarantee that two of them running at once would not race.
-   *
-   * A missing `gemini` is the exception: it would fail identically for every skill, so it stops
-   * the run at once rather than producing one copy of the same error per skill.
-   */
   private async applyAll(targets: readonly Skill[]): Promise<string[]> {
-    const changed: string[] = [];
-    const failed: Array<{ name: string; message: string }> = [];
-
-    for (const skill of targets) {
-      try {
-        // eslint-disable-next-line no-await-in-loop -- one at a time; see the doc comment above
-        await this.apply(skill);
-        changed.push(skill.name);
-        this.logSafe(`${this.doneTitle} ${skill.name}.`);
-      } catch (error) {
-        if (error instanceof GeminiNotFoundError) throw error;
-        failed.push({ name: skill.name, message: error instanceof Error ? error.message : String(error) });
-      }
-    }
-
-    if (failed.length > 0) {
-      const summary = `${this.doneTitle} ${changed.length} of ${targets.length} skill(s).`;
-      const reasons = failed.map(({ name, message }) => `  ${name}: ${message}`).join('\n');
-      throw new CliError(`${summary} These failed:\n${reasons}`, 1);
-    }
-    return changed;
+    return applySkills(
+      targets,
+      (skill) => this.apply(skill),
+      this.done,
+      (message) => this.logSafe(message),
+    );
   }
 
   /** Runs the gemini command for one skill. */

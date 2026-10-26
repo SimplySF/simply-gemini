@@ -68,6 +68,25 @@ A subagent is installed when `~/.gemini/agents/<name>.md` exists, however it got
 installed subagents that no source provides, with no source, and `uninstall` can remove them —
 uninstalling only ever deletes the file under `~/.gemini/agents`, never a source file.
 
+## Defaults
+
+A source can name the subagents everyone who registers it should have, in a `gemini-source.json`
+at its root:
+
+```json
+{ "defaults": ["code-reviewer", "test-writer"] }
+```
+
+`simply gemini agents register` copies those into place straight after registering the source. A
+default that is already installed is skipped, even if it is outdated; update it with
+`install --force` as above. A name the source doesn't provide, or that another source registered
+earlier provides instead, is warned about and not installed; it never stops the source being
+registered, and neither does a `gemini-source.json` that isn't valid. Pass `--no-install-defaults`
+to register without installing anything.
+
+Registering the same source again installs any default that is missing, including one you
+uninstalled. Use `--no-install-defaults` when re-registering if you don't want that.
+
 ## Two sources, one name
 
 Gemini loads a subagent by name and can hold only one per name. When two registered sources each

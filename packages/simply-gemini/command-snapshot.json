@@ -28,7 +28,7 @@
     "command": "gemini:agents:register",
     "flagAliases": [],
     "flagChars": ["d", "i", "p"],
-    "flags": ["description", "id", "json", "path"],
+    "flags": ["description", "id", "install-defaults", "json", "path"],
     "plugin": "@simplysf/simply-gemini"
   },
   {
@@ -68,7 +68,7 @@
     "command": "gemini:skills:register",
     "flagAliases": [],
     "flagChars": ["d", "i", "p"],
-    "flags": ["description", "id", "json", "path"],
+    "flags": ["description", "id", "install-defaults", "json", "path"],
     "plugin": "@simplysf/simply-gemini"
   },
   {

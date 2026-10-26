@@ -59,6 +59,10 @@ describe('@simplysf/simply-gemini-core', () => {
         'installAgent',
         'selectAgents',
         'uninstallAgent',
+        // source manifests
+        'MANIFEST_FILE',
+        'readSourceManifest',
+        'resolveDefaults',
         // rendering
         'agentColumns',
         'formatTable',

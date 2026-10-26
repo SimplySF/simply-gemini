@@ -24,6 +24,7 @@ import {
   type SkillAction,
   stripControl,
 } from '@simplysf/simply-gemini-core';
+import { applyEach } from './apply-each.js';
 import { GeminiCommand } from './base-command.js';
 import { canPrompt, pickNames } from './prompt.js';
 
@@ -77,10 +78,6 @@ export abstract class AgentChangeCommand<T extends typeof Command> extends Agent
   protected abstract readonly action: SkillAction;
   /** Past tense of the action, for messages: "installed", "uninstalled". */
   protected abstract readonly done: string;
-
-  private get doneTitle(): string {
-    return `${this.done.charAt(0).toUpperCase()}${this.done.slice(1)}`;
-  }
 
   /** Whether `--force` was given. Only `install` has the flag. */
   private get force(): boolean {
@@ -150,31 +147,13 @@ export abstract class AgentChangeCommand<T extends typeof Command> extends Agent
     );
   }
 
-  /**
-   * Applies the action to each subagent in turn, carrying on past a failure so one unreadable file
-   * does not strand the rest, then fails the command if anything failed.
-   */
+  /** Applies the action to each subagent in turn; one unreadable file does not strand the rest. */
   private async applyAll(targets: readonly Agent[]): Promise<string[]> {
-    const changed: string[] = [];
-    const failed: Array<{ name: string; message: string }> = [];
-
-    for (const agent of targets) {
-      try {
-        // eslint-disable-next-line no-await-in-loop -- one at a time, so the output reads in order
-        await this.apply(agent);
-        changed.push(agent.name);
-        this.logSafe(`${this.doneTitle} ${agent.name}.`);
-      } catch (error) {
-        failed.push({ name: agent.name, message: error instanceof Error ? error.message : String(error) });
-      }
-    }
-
-    if (failed.length > 0) {
-      const summary = `${this.doneTitle} ${changed.length} of ${targets.length} subagent(s).`;
-      const reasons = failed.map(({ name, message }) => `  ${name}: ${message}`).join('\n');
-      throw new CliError(`${summary} These failed:\n${reasons}`, 1);
-    }
-    return changed;
+    return applyEach(targets, (agent) => this.apply(agent), {
+      done: this.done,
+      noun: 'subagent',
+      log: (message) => this.logSafe(message),
+    });
   }
 
   /** Installs or removes one subagent. */
