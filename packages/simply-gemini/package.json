@@ -63,7 +63,7 @@
     "@clack/prompts": "^1.8.1",
     "@oclif/core": "^4.11.2",
     "@simplysf/simply-gemini-core": "workspace:^0.4.0",
-    "execa": "^10.2.0"
+    "execa": "^10.2.1"
   },
   "devDependencies": {
     "@oclif/plugin-command-snapshot": "^5.4.0",
